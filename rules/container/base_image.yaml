@@ -1,0 +1,16 @@
+rules:
+  - id: SL_CONT_001
+    name: Avoid using latest tag
+    severity: MEDIUM
+    description: Container images should use specific version tags, not :latest
+    check: image_tag != "latest"
+    remediation: Pin image to a specific version, e.g. nginx:1.25.4
+    tags: [best-practice, image]
+
+  - id: SL_CONT_002
+    name: Container running as root
+    severity: HIGH
+    description: Containers should not run as root user
+    check: user != "root" and user != ""
+    remediation: Add USER directive in Dockerfile to run as non-root
+    tags: [cis, privilege]

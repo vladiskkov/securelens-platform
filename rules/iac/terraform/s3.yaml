@@ -1,0 +1,21 @@
+rules:
+  - id: SL_TF_S3_001
+    name: S3 bucket public ACL
+    severity: HIGH
+    resource: aws_s3_bucket
+    description: S3 bucket should not use public-read or public-read-write ACL
+    check: acl not in ["public-read", "public-read-write"]
+    remediation: Set acl = "private" and configure bucket policy explicitly
+    references:
+      - https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+    tags: [cis, s3, data-exposure]
+    cis_controls: ["2.1.5"]
+
+  - id: SL_TF_S3_002
+    name: S3 bucket versioning disabled
+    severity: MEDIUM
+    resource: aws_s3_bucket
+    description: S3 bucket should have versioning enabled for data recovery
+    check: versioning[0].enabled == true
+    remediation: Enable versioning in aws_s3_bucket_versioning resource
+    tags: [cis, s3, backup]

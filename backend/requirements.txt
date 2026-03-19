@@ -1,0 +1,39 @@
+# API Framework
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# Data validation
+pydantic==2.6.3
+pydantic-settings==2.2.1
+
+# Database
+sqlalchemy==2.0.28
+alembic==1.13.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# Graph DB
+neo4j==5.18.0
+
+# Queue / Cache
+celery==5.3.6
+redis==5.0.2
+
+# Security / Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# IaC Parsing
+python-hcl2==4.3.2
+pyyaml==6.0.1
+
+# Container Scanning (Trivy API client)
+httpx==0.27.0
+
+# OPA / Policy
+requests==2.31.0
+
+# Utils
+python-dotenv==1.0.1
+structlog==24.1.0

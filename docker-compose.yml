@@ -1,0 +1,107 @@
+version: "3.9"
+
+services:
+  # ── Backend API ────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - APP_ENV=development
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Celery Worker ─────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - api
+      - redis
+    command: celery -A app.core.celery_app worker --loglevel=info -Q scans,asm
+
+  # ── Frontend ──────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - api
+
+  # ── PostgreSQL ────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-securelens}
+      POSTGRES_USER: ${POSTGRES_USER:-securelens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securelens_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U securelens"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Neo4j (Risk Graph) ────────────────────
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-securelens_dev}
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "neo4j", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ── Redis ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Trivy Server ──────────────────────────
+  trivy:
+    image: aquasec/trivy:latest
+    ports:
+      - "4954:4954"
+    command: server --listen 0.0.0.0:4954
+    volumes:
+      - trivy_cache:/root/.cache/trivy
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  redis_data:
+  trivy_cache:
